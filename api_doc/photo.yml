@@ -1,0 +1,20 @@
+---
+tags:
+  - 圖片上傳API
+
+parameters:
+  - name: file
+    in: formData
+    type: file
+    required: true
+    description: 照片上傳，限定 'png', 'jpg', 'jpeg'
+
+responses:
+  201:
+    description: A language with its awesomeness
+    schema:
+      properties:
+        message:
+          type: "string"
+          description: 正確回傳
+          default: File successfully uploaded
