@@ -3,6 +3,7 @@ from flask_cors import CORS
 from werkzeug.utils import secure_filename
 from flasgger import Swagger
 from flasgger.utils import swag_from
+import apiFunction.api as api
 import os
 
 application = Flask(__name__)
@@ -53,22 +54,24 @@ def upload_file():
         resp = jsonify({'message': 'No file part in the request'})
         resp.status_code = 400
         return resp
+
     file = request.files['file']
     if file.filename == '':
         resp = jsonify({'message': 'No file selected for uploading'})
         resp.status_code = 400
         return resp
+
     if file and allowed_file(file.filename):
         filename = secure_filename(file.filename)
         file.save(os.path.join(application.config['UPLOAD_FOLDER'], filename))
-        resp = jsonify({'message': 'File successfully uploaded ' + filename})
+        resp = api.photoAnalyze(filename=filename)
         resp.status_code = 201
         return resp
     else:
-        resp = jsonify({'message': 'Allowed file types are txt, pdf, png, jpg, jpeg, gif'})
+        resp = jsonify({'message': 'Allowed file types are \'png\', \'jpg\', \'jpeg\''})
         resp.status_code = 400
         return resp
 
 
 if __name__ == '__main__':
-    application.run(host='0.0.0.0')
+    application.run(host='0.0.0.0', debug=True)

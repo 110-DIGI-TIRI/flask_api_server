@@ -11,10 +11,157 @@ parameters:
 
 responses:
   201:
-    description: A language with its awesomeness
+    description: 圖片分析成功
     schema:
       properties:
         message:
           type: "string"
           description: 正確回傳
-          default: File successfully uploaded
+          default: "success"
+
+        analysis_result:
+          type: "object"
+          properties:
+            azure:
+              type: "object"
+              properties:
+                Brands:
+                  type: "string"
+                  description: 品牌名稱
+                  default: null
+
+                Color:
+                  type: "array"
+                  items:
+                    type: "string"
+                    description: 主要顏色
+                    default: null
+                  example: [ 'White', 'Red' ]
+
+                Tag:
+                  type: "object"
+                  properties:
+                    0:
+                      type: "object"
+                      properties:
+                        name:
+                          type: "string"
+                          description: 辨識標籤
+                          example: "shoe"
+                          default: null
+                        confidence:
+                          type: "number"
+                          description: 信心度
+                          example: 0.9849
+                          default: null
+                    1:
+                      type: "object"
+                      properties:
+                        name:
+                          type: "string"
+                          description: 辨識標籤
+                          example: "shoe"
+                          default: null
+                        confidence:
+                          type: "number"
+                          description: 信心度
+                          example: 0.9849
+                          default: null
+
+            aws:
+              type: "object"
+              properties:
+                Tag:
+                  type: "object"
+                  properties:
+                    0:
+                      type: "object"
+                      properties:
+                        name:
+                          type: "string"
+                          description: 辨識標籤
+                          example: "shoe"
+                          default: null
+                        confidence:
+                          type: "number"
+                          description: 信心度
+                          example: 0.9849
+                          default: null
+                    1:
+                      type: "object"
+                      properties:
+                        name:
+                          type: "string"
+                          description: 辨識標籤
+                          example: "shoe"
+                          default: null
+                        confidence:
+                          type: "number"
+                          description: 信心度
+                          example: 0.9849
+                          default: null
+
+            detail_information:
+              type: "object"
+              properties:
+
+                Describe:
+                  type: "object"
+                  properties:
+
+                    string:
+                      type: "string"
+                      description: 描述詞
+                      example: "a red and white shoe"
+                      default: null
+
+                    confidence:
+                      type: "number"
+                      description: 信心度
+                      default: null
+
+                color_detail:
+                  type: "object"
+                  properties:
+
+                    Is black and white:
+                      type: "boolean"
+                      description: 是否黑白照片
+                      example: False
+                      default: null
+
+                    Accent color:
+                      type: "string"
+                      description: 主要顏色色碼
+                      example: "#862425"
+                      default: null
+
+                    Dominant background color:
+                      type: "string"
+                      description: 背景顏色
+                      example: "White"
+                      default: null
+
+                    Dominant foreground color:
+                      type: "string"
+                      description: 前景顏色
+                      example: "White"
+                      default: null
+
+                    Dominant colors:
+                      type: "array"
+                      items:
+                        type: "string"
+                        description: 主要顏色
+                        default: null
+                      example: [ 'White', 'Red' ]
+
+  400:
+    description: 傳送錯誤
+    schema:
+      properties:
+        message:
+          type: "string"
+          description: 錯誤訊息
+          example: "No file part in the request"
+
