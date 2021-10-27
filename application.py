@@ -1,3 +1,5 @@
+import json
+
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from werkzeug.utils import secure_filename
@@ -40,6 +42,7 @@ def hello_world():  # put applicationlication's code here
 
 
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
+ALLOWED_LANGUAGE = ['en', 'zh_TW']
 
 
 def allowed_file(filename):
@@ -50,25 +53,28 @@ def allowed_file(filename):
 @swag_from("./api_doc/photo.yml")
 def upload_file():
     # check if the post request has the file part
-    if 'file' not in request.files:
-        resp = jsonify({'message': 'No file part in the request'})
+    if 'file' not in request.files or 'language' not in request.values:
+        resp = jsonify({'message': 'No file or language part in the request'})
         resp.status_code = 400
         return resp
 
     file = request.files['file']
-    if file.filename == '':
-        resp = jsonify({'message': 'No file selected for uploading'})
+    language = request.values['language']
+
+    if file.filename == '' or language == '':
+        resp = jsonify({'message': 'file and language value are required'})
         resp.status_code = 400
         return resp
 
-    if file and allowed_file(file.filename):
+    if file and allowed_file(file.filename) and language in ALLOWED_LANGUAGE:
         filename = secure_filename(file.filename)
         file.save(os.path.join(application.config['UPLOAD_FOLDER'], filename))
-        resp = api.photoAnalyze(filename=filename)
+        resp = api.photoAnalyze(filename=filename, language=language)
         resp.status_code = 201
         return resp
     else:
-        resp = jsonify({'message': 'Allowed file types are \'png\', \'jpg\', \'jpeg\''})
+        resp = jsonify(
+            {'message': 'Allowed file types are \'png\', \'jpg\', \'jpeg\'，language are \'en\' or \'zh_TW\''})
         resp.status_code = 400
         return resp
 
