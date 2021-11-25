@@ -86,7 +86,10 @@ def crawler_analyze():  # put application's code here
         resp = jsonify({'message': 'No keyword or detail_information part in the request'})
         resp.status_code = 400
         return resp
-
+    if type(data["keyword"]["brands"]) != list or type(data["keyword"]["color"]) != list or type(data["keyword"]["tag"]) != list:
+        resp = jsonify({'message': 'All keyword data type must be 「list」'})
+        resp.status_code = 400
+        return resp
     else:
         keyword = ""
         # 抓取brands、color、tag的資料
