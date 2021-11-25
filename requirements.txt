@@ -1,4 +1,6 @@
 attrs==21.2.0
+azure-cognitiveservices-vision-computervision==0.9.0
+azure-common==1.1.27
 certifi==2021.10.8
 click==8.0.3
 colorama==0.4.4
@@ -19,3 +21,6 @@ waitress==2.0.0
 Werkzeug==2.0.2
 wincertstore==0.2
 zipp==3.6.0
+boto3~=1.18.21
+msrest~=0.6.21
+googletrans~=4.0.0rc1
