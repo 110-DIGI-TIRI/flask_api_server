@@ -77,5 +77,28 @@ def upload_file():
         return resp
 
 
+@application.route('/api/analyze', methods=['POST'])
+def crawler_analyze():  # put application's code here
+    data = request.get_json()
+
+    # 格式檢查
+    if "keyword" not in data.keys() or "detail_information" not in data.keys():
+        resp = jsonify({'message': 'No keyword or detail_information part in the request'})
+        resp.status_code = 400
+        return resp
+
+    else:
+        keyword = ""
+        # 抓取brands、color、tag的資料
+        for BCT, value in data["keyword"].items():
+            for kw in value:
+                keyword += kw + " "
+
+        # 開始爬蟲
+        resp = api.crawler(keyword=keyword)
+        # resp.status_code = 201
+        return resp
+
+
 if __name__ == '__main__':
     application.run(host='0.0.0.0', debug=True)
