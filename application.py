@@ -98,7 +98,7 @@ def crawler_analyze():  # put application's code here
                 keyword += kw + " "
 
         # 開始爬蟲
-        resp = api.crawler(keyword=keyword)
+        resp = api.crawler(keyword=keyword[:-1])
         # resp.status_code = 201
         return resp
 

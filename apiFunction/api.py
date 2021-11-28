@@ -129,7 +129,7 @@ def crawler(keyword):
     pages = 2
 
     start = time.time()
-    df_PChome = wcf.PChome(headers, keyword, pages)
+    df_pchome = wcf.PChome(headers, keyword, pages)
     df_momo = wcf.momo(headers, keyword, pages)
     # 計時終點
     end = time.time()
@@ -139,27 +139,16 @@ def crawler(keyword):
     # 整理csv檔/pchome and momo
     # df_keyboard_pchome=tidyDfandgetPrice('mom.csv') #收到的pchome csv檔
     # df_keyboard_momo=momoShoptidyDfandgetPrice('k.csv') #收到的momo csv檔
-    df_pchome = wcf.tidyDfandgetPrice('PChome.csv')  # 收到的pchome csv檔
-    df_momo = wcf.momoShoptidyDfandgetPrice('momo.csv')  # 收到的momo csv檔
+    # df_pchome = wcf.tidyDfandgetPrice('PChome.csv')  # 收到的pchome csv檔
+    # df_momo = wcf.momoShoptidyDfandgetPrice('momo.csv')  # 收到的momo csv檔
+    df_pchome = wcf.tidyDfandgetPrice(df_pchome)  # 收到的pchome csv檔
+    df_momo = wcf.momoShoptidyDfandgetPrice(df_momo)  # 收到的momo csv檔
     df = df_pchome.append(df_momo)  # 兩個電商的相加
-    df['iscombine'] = df['iscombine'].fillna(0)  # momo的isCombine是空值，給予其值
 
     df_excludeCombine = wcf.getnotCombineProduct(df)  # 排除組合價
-    df_excludeCombine.to_csv('momoandpchome.csv', encoding='utf-8-sig', index=False)
-    df_excludeCombine.to_json('DataAnalysis.json', orient='table', force_ascii=False)
     keyboard_q1, keyboard_q3, df_excludeoutlier = wcf.deleteExcludeOutlierPrice(df_excludeCombine)  # 計算四分位並排除outlier
 
     # print('鍵盤主要價格:${}$-${}'.format(int(keyboard_q1), int(keyboard_q3)))
-
-    # 產出價格25-75區間的箱型圖
-    keyboard_discountprice = df_excludeoutlier['discountprice']
-    labels = 'Computer Price', 'Mouse Price', 'Keyboard Price'
-    plt.title('Boxplot of Product')
-    plt.ylabel('Price')
-    plt.boxplot(keyboard_discountprice)
-    plt.xticks([1], ['Keyboard'])
-    plt.show()
-    plt.savefig('Keyboard_NormalPrice.png')
 
     # 取正常售價並根據價格,折扣數來排序
     df_keyboard_sortincrease_byprice, df_keyboard_sortdecrease_byprice = wcf.sortNormalProductbyPrice(df_excludeoutlier,
@@ -171,14 +160,13 @@ def crawler(keyword):
     df_lowestbydiscountpercent = wcf.getLowestDiscountpercent(df_keyboard_sortincrease_byprice)  # 折扣最多
 
     # 轉成json檔
-    base64_boxplot = wcf.imageTransfertoJson('Keyboard_NormalPrice.png')
     js_price_decrease = wcf.dataframeTransfertoJson(df_keyboard_sortdecrease_byprice)
     js_price_increase = wcf.dataframeTransfertoJson(df_keyboard_sortincrease_byprice)
     js_recommand_lowest = wcf.dataframeTransfertoJson(df_lowestbyprice)
     js_recommand_discount = wcf.dataframeTransfertoJson(df_lowestbydiscountpercent)
 
     # 組成json格式
-    alljson = '{' + '"boxplot":' + '"' + 'data:image/png;base64,' + base64_boxplot + '",' + '"normalPrice25":' + str(
+    alljson = '{' + '"normalPrice25":' + str(
         keyboard_q3) + ',"narmalPrice75":' + str(
         keyboard_q1) + ',' + '"table_normal_decrease":' + js_price_decrease + ',' + '"table_normal_increase":' + js_price_increase + ',' + '"table_recommand_lowest":' + js_recommand_lowest + ',' + '"table_recommand_discount":' + js_recommand_discount + '}'
     return alljson
