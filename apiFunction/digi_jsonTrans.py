@@ -25,7 +25,7 @@ def jsonTrans(analyzeJson=None):
                         except:
                             zh_tw_colorList.append(transColor)
                         else:
-                            zh_tw_colorList.append(zh_CN_results.text)
+                            zh_tw_colorList.append(zh_CN_results.text.replace("的", ""))
 
                     zh_tw_JSON[firstLayerKey][secondLayerKey] = zh_tw_colorList
 
@@ -59,9 +59,9 @@ def jsonTrans(analyzeJson=None):
                 continue
             else:
                 zh_tw_JSON[firstLayerKey]["color_detail"][
-                    "Dominant background color"] = zh_CN_results_background.text
+                    "Dominant background color"] = zh_CN_results_background.text.replace("的", "")
                 zh_tw_JSON[firstLayerKey]["color_detail"][
-                    "Dominant foreground color"] = zh_CN_results_foreground.text
+                    "Dominant foreground color"] = zh_CN_results_foreground.text.replace("的", "")
 
             # Dominant colors的翻譯
             zh_tw_JSON[firstLayerKey]["color_detail"]["Dominant colors"] = zh_tw_colorList
