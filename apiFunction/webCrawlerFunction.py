@@ -11,180 +11,170 @@ import numpy as np
 
 
 def momo(headers, keyword, pages):
-    urls = []
-    for page in range(1, pages):
-        url = 'https://m.momoshop.com.tw/search.momo?_advFirst=N&_advCp=N&curPage={}&searchType=1&cateLevel=2&ent=k&searchKeyword={}&_advThreeHours=N&_isFuzzy=0&_imgSH=fourCardType'.format(
-            page, keyword)
-        print(url)
-        resp = requests.get(url, headers=headers)
-        if resp.status_code == 200:
+    try:
+        urls = []
+        for page in range(1, pages):
+            url = 'https://m.momoshop.com.tw/search.momo?_advFirst=N&_advCp=N&curPage={}&searchType=1&cateLevel=2&ent=k&searchKeyword={}&_advThreeHours=N&_isFuzzy=0&_imgSH=fourCardType'.format(
+                page, keyword)
+            print(url)
+            resp = requests.get(url, headers=headers)
+            if resp.status_code == 200:
+                soup = BeautifulSoup(resp.text)
+                for item in soup.select('li.goodsItemLi > a'):
+                    # urls.append('https://m.momoshop.com.tw'+item['href'])
+                    # 修正成電腦版的網頁
+                    urls.append('https://www.momoshop.com.tw' + item['href'].replace('/goods.momo?i_code=',
+                                                                                     '/goods/GoodsDetail.jsp?i_code='))
+            urls = list(set(urls))
+        #     break
+
+        df_momo = []
+        for i, url in enumerate(urls):
+            columns = []
+            values = []
+
+            resp = requests.get(url, headers=headers)
             soup = BeautifulSoup(resp.text)
-            for item in soup.select('li.goodsItemLi > a'):
-                # urls.append('https://m.momoshop.com.tw'+item['href'])
-                # 修正成電腦版的網頁
-                urls.append('https://www.momoshop.com.tw' + item['href'].replace('/goods.momo?i_code=',
-                                                                                 '/goods/GoodsDetail.jsp?i_code='))
-        urls = list(set(urls))
-        print(len(urls))
-    #     break
+            # 標題
+            title = soup.find('meta', {'property': 'og:title'})['content']
+            # 品牌
+            brand = soup.find('meta', {'property': 'product:brand'})['content']
+            # 連結
+            link = soup.find('meta', {'property': 'og:url'})['content']
+            # 原價
+            try:
+                price = re.sub(r'\r\n| ', '', soup.find('del').text)
+            except:
+                price = ''
+            # 特價
+            amount = soup.find('meta', {'property': 'product:price:amount'})['content']
+            # 類型
+            # 描述
+            try:
+                # desc = soup.find('div',{'class':'Area101'}).text
+                # desc = re.sub('\r|\n| ', '', desc)
+                desc = soup.find('meta', {'property': 'og:description'})['content']
+            except:
+                desc = ''
+            # 產品圖片
+            try:
+                img = soup.find('meta', {'property': 'og:image'})['content']
+            except:
+                img = ''
 
-    df_momo = []
-    for i, url in enumerate(urls):
-        columns = []
-        values = []
+            columns += ['title', 'brand', 'link', 'price', 'amount', 'desc', 'image']
+            values += [title, brand, link, price, amount, desc, img]
+            ndf = pd.DataFrame(data=values, index=columns).T
+            df_momo.append(ndf)
 
-        resp = requests.get(url, headers=headers)
-        soup = BeautifulSoup(resp.text)
-        # 標題
-        title = soup.find('meta', {'property': 'og:title'})['content']
-        # 品牌
-        brand = soup.find('meta', {'property': 'product:brand'})['content']
-        # 連結
-        link = soup.find('meta', {'property': 'og:url'})['content']
-        # 原價
-        try:
-            price = re.sub(r'\r\n| ', '', soup.find('del').text)
-        except:
-            price = ''
-        # 特價
-        amount = soup.find('meta', {'property': 'product:price:amount'})['content']
-        # # 類型
-        # 描述
-        try:
-            # desc = soup.find('div',{'class':'Area101'}).text
-            # desc = re.sub('\r|\n| ', '', desc)
-            desc = soup.find('meta', {'property': 'og:description'})['content']
-        except:
-            desc = ''
-        # 產品圖片
-        try:
-            img = soup.find('meta', {'property': 'og:image'})['content']
-        except:
-            img = ''
-
-        print('==================  {}  =================='.format(i))
-        print(title)
-        print(brand)
-        print(link)
-        print(amount)
-        # print(cate)
-
-        columns += ['title', 'brand', 'link', 'price', 'amount', 'desc', 'image']
-        values += [title, brand, link, price, amount, desc, img]
-        ndf = pd.DataFrame(data=values, index=columns).T
-        df_momo.append(ndf)
-
-    df_momo = pd.concat(df_momo, ignore_index=True)
-    df_momo.to_csv('momo.csv', encoding='utf-8-sig', index=False)
+        df_momo = pd.concat(df_momo, ignore_index=True)
+    except:
+        df_momo = ''
+    # df_momo.to_csv('momo.csv',encoding='utf-8-sig',index=False)
     return df_momo
 
 
 def PChome(headers, keyword, pages):
-    # 蒐集產品連結清單
-    prodids = []
-    for page in list(range(1, pages)):
-        url = 'https://ecshweb.pchome.com.tw/search/v3.3/all/results?q={}&page={}&sort=sale/dc'.format(keyword,
-                                                                                                       page)
-        resp = requests.get(url, headers=headers)
-        for prodid in resp.json()['prods']:
-            prodids.append(prodid['Id'])
-        prodids = list(set(prodids))
-        # print('There are {} products in list.'.format(len(prodids)))
+    try:
+        # 蒐集產品連結清單
+        prodids = []
+        for page in list(range(1, pages)):
+            url = 'https://ecshweb.pchome.com.tw/search/v3.3/all/results?q={}&page={}&sort=sale/dc'.format(keyword,
+                                                                                                           page)
+            resp = requests.get(url, headers=headers)
+            for prodid in resp.json()['prods']:
+                prodids.append(prodid['Id'])
+            prodids = list(set(prodids))
+        # 爬取產品資料：產品資料放在兩個不同的API，這兩個API response的資料結構不一樣
 
-    # 爬取產品資料：產品資料放在兩個不同的API，這兩個API response的資料結構不一樣
+        # ecapi
+        df1 = []
+        for i, Id in enumerate(prodids):
+            columns, values = [], []
+            sleep(0.7)
+            ecapi = 'https://mall.pchome.com.tw/ecapi/ecshop/prodapi/v2/prod/{}&fields=Seq,Id,Stmt,Slogan,Name,Nick,Store,PreOrdDate,SpeOrdDate,Price,Discount,Pic,isCombine&_callback=jsonp_prod&1587196620'.format(
+                Id)
+            resp = requests.get(ecapi, headers=headers)
+            data = re.sub('try{jsonp_prod\(|\}\);\}catch\(e\)\{if\(window.console\)\{console.log\(e\)\;\}', '',
+                          resp.text)
+            data = json.loads(data)[Id + '-000']
 
-    # ecapi
-    df1 = []
-    for i, Id in enumerate(prodids):
-        columns, values = [], []
-        # print('Dealing with {}: {}'.format(i, Id))
-        sleep(0.7)
-        ecapi = 'https://mall.pchome.com.tw/ecapi/ecshop/prodapi/v2/prod/{}&fields=Seq,Id,Stmt,Slogan,Name,Nick,Store,PreOrdDate,SpeOrdDate,Price,Discount,Pic,Weight,ISBN,Qty,Bonus,isBig,isSpec,isCombine,isDiy,isRecyclable,isCarrier,isMedical,isBigCart,isSnapUp,isDescAndIntroSync,isFoodContents,isHuge,isEnergySubsidy,isPrimeOnly,isWarranty,isLegalStore,isOnSale,isPriceTask,isBidding,isETicket&_callback=jsonp_prod&1587196620'.format(
-            Id)
-        resp = requests.get(ecapi, headers=headers)
-        data = re.sub('try{jsonp_prod\(|\}\);\}catch\(e\)\{if\(window.console\)\{console.log\(e\)\;\}', '',
-                      resp.text)
-        data = json.loads(data)[Id + '-000']
+            for key, value in data.items():
+                columns.append(key)
+                values.append(value)
+            ndf = pd.DataFrame(data=values, index=columns).T
+            df1.append(ndf)
+        df1 = pd.concat(df1, ignore_index=True)
 
-        for key, value in data.items():
-            columns.append(key)
-            values.append(value)
-        ndf = pd.DataFrame(data=values, index=columns).T
-        df1.append(ndf)
-    df1 = pd.concat(df1, ignore_index=True)
+        # cdn
+        df2 = []
+        for i, Id in enumerate(prodids):
+            columns, values = [], []
+            sleep(0.7)
+            cdn = 'https://ecapi.pchome.com.tw/cdn/ecshop/prodapi/v2/prod/{}/desc&fields=Id,Stmt,Equip,Remark,Liability,Kword,Slogan,Author,Transman,Pubunit,Pubdate,Approve&_callback=jsonp_desc'.format(
+                Id + '-000')
+            resp = requests.get(cdn, headers=headers)
+            data = re.sub('try\{jsonp_desc\(|\}\);\}catch\(e\)\{if\(window.console\)\{console.log\(e\)\;\}', '',
+                          resp.text)
+            data = json.loads(data)
+            data = data[Id]
 
-    # cdn
-    df2 = []
-    for i, Id in enumerate(prodids):
-        columns, values = [], []
-        # print('Dealing with {}: {}'.format(i, Id))
-        sleep(0.7)
-        cdn = 'https://ecapi.pchome.com.tw/cdn/ecshop/prodapi/v2/prod/{}/desc&fields=Id,Stmt,Equip,Remark,Liability,Kword,Slogan,Author,Transman,Pubunit,Pubdate,Approve&_callback=jsonp_desc'.format(
-            Id + '-000')
-        resp = requests.get(cdn, headers=headers)
-        data = re.sub('try\{jsonp_desc\(|\}\);\}catch\(e\)\{if\(window.console\)\{console.log\(e\)\;\}', '',
-                      resp.text)
-        data = json.loads(data)
-        data = data[Id]
+            for key, value in data.items():
+                columns.append(key)
+                values.append(value)
+            ndf = pd.DataFrame(data=values, index=columns).T
+            df2.append(ndf)
 
-        for key, value in data.items():
-            columns.append(key)
-            values.append(value)
-        ndf = pd.DataFrame(data=values, index=columns).T
-        df2.append(ndf)
+        df2 = pd.concat(df2, ignore_index=True)
 
-    df2 = pd.concat(df2, ignore_index=True)
+        # 合併兩個資料表
 
-    # 合併兩個資料表
+        df1['Id'] = df1['Id'].apply(lambda x: re.sub('-000$', '', x))
+        df = pd.merge(df1, df2, how='left', on='Id')
+        # 資料清理
+        df.drop(columns=['PreOrdDate', 'SpeOrdDate', 'Discount'], inplace=True)
+        # print(df.info())
 
-    df1['Id'] = df1['Id'].apply(lambda x: re.sub('-000$', '', x))
-    df = pd.merge(df1, df2, how='left', on='Id')
-    # 資料清理
-    df.drop(columns=['PreOrdDate', 'SpeOrdDate', 'Discount', 'ISBN', 'Qty', 'Bonus', 'isBig', 'isSpec', 'isDiy',
-                     'isRecyclable', 'isCarrier', 'isMedical', 'isBigCart', 'isSnapUp', 'isDescAndIntroSync',
-                     'isFoodContents', 'isHuge', 'isEnergySubsidy', 'isPrimeOnly', 'isWarranty', 'isLegalStore',
-                     'isOnSale', 'isPriceTask', 'isBidding', 'isETicket', 'Author', 'Transman', 'Pubunit',
-                     'Pubdate', 'Approve', 'Stmt', 'Equip', 'Remark'], inplace=True)
-    # print(df.info())
+        # 處理【Price】資料
+        df.loc[:, "Price"] = df.loc[:, "Price"].astype(str).str.replace(", 'Prime': ''}", '')
+        df.loc[:, "Price"] = df.loc[:, "Price"].astype(str).str.replace("{'M': ", '')
 
-    # 處理【Price】資料
-    df.loc[:, "Price"] = df.loc[:, "Price"].astype(str).str.replace(", 'Prime': ''}", '')
-    df.loc[:, "Price"] = df.loc[:, "Price"].astype(str).str.replace("{'M': ", '')
+        # print(df.loc[:,"Price"])
+        # print(df.loc[:,"Price"].str.split(",").str.get(0))
+        df.loc[:, "Price"] = df.loc[:, "Price"].astype(str).str.replace(" 'P': ", '')
 
-    # print(df.loc[:,"Price"])
-    # print(df.loc[:,"Price"].str.split(",").str.get(0))
-    df.loc[:, "Price"] = df.loc[:, "Price"].astype(str).str.replace(" 'P': ", '')
+        # 新增【SpePrice】資料
+        df['SpePrice'] = df.loc[:, "Price"].astype(str).str.split(",").str.get(1)
 
-    # 新增【SpePrice】資料
-    df['SpePrice'] = df.loc[:, "Price"].astype(str).str.split(",").str.get(1)
+        # 新增【OriPrice】資料
+        df['OriPrice'] = df.loc[:, "Price"].astype(str).str.split(",").str.get(0)
+        df.loc[df['OriPrice'] == '0', 'OriPrice'] = df.loc[df['OriPrice'] == '0', 'SpePrice'].values
 
-    # 新增【OriPrice】資料
-    df['OriPrice'] = df.loc[:, "Price"].astype(str).str.split(",").str.get(0)
-    df.loc[df['OriPrice'] == '0', 'OriPrice'] = df.loc[df['OriPrice'] == '0', 'SpePrice'].values
+        # 刪除【Price】資料
+        df.drop(columns=['Price'], inplace=True)
 
-    # 刪除【Price】資料
-    df.drop(columns=['Price'], inplace=True)
+        # 處理【Pic】資料
+        df.loc[:, "Pic"] = df.loc[:, "Pic"].astype(str).str.replace("{'B': '", '')
+        df.loc[:, "Pic"] = df.loc[:, "Pic"].astype(str).str.replace("', 'S': '", ',')
+        df.loc[:, "Pic"] = df.loc[:, "Pic"].astype(str).str.replace("'}", '')
 
-    # 處理【Pic】資料
-    df.loc[:, "Pic"] = df.loc[:, "Pic"].astype(str).str.replace("{'B': '", '')
-    df.loc[:, "Pic"] = df.loc[:, "Pic"].astype(str).str.replace("', 'S': '", ',')
-    df.loc[:, "Pic"] = df.loc[:, "Pic"].astype(str).str.replace("'}", '')
+        # 新增【Image】資料
+        df['image'] = ["https://d.ecimg.tw/"] + df.loc[:, "Pic"].astype(str).str.split(",").str.get(1)
 
-    # 新增【Image】資料
-    df['image'] = ["https://d.ecimg.tw/"] + df.loc[:, "Pic"].astype(str).str.split(",").str.get(1)
+        # 刪除【Pic】資料
+        df.drop(columns=['Pic'], inplace=True)
 
-    # 刪除【Pic】資料
-    df.drop(columns=['Pic'], inplace=True)
-
-    # 新增【Web】資料
-    df['link'] = ["https://24h.pchome.com.tw/prod/"] + df.loc[:, "Id"]
-    # 儲存資料
-    df.to_csv('PChome.csv', encoding='utf-8-sig', index=False)
+        # 新增【Web】資料
+        df['link'] = ["https://24h.pchome.com.tw/prod/"] + df.loc[:, "Id"]
+        # 儲存資料
+        # df.to_csv('PChome.csv',encoding='utf-8-sig',index=False)
+    except:
+        df = ''
     return df
 
 
-def tidyDfandgetPrice(itemfile):  # 整理pchome
-    df = pd.read_csv(itemfile)
+def tidyDfandgetPrice(df):  # 整理pchome
+    df_tidy = df
 
     df_tidy = df[{'Name', 'isCombine', 'OriPrice', 'SpePrice', 'image', 'link', 'Slogan'}]
     df_tidy = df_tidy.rename(columns={'OriPrice': 'rawprice'})
@@ -199,8 +189,7 @@ def tidyDfandgetPrice(itemfile):  # 整理pchome
     return df_tidy
 
 
-def momoShoptidyDfandgetPrice(itemfile):  # 整理momo
-    df = pd.read_csv(itemfile)
+def momoShoptidyDfandgetPrice(df):  # 整理momo
     df.loc[:, "price"] = df.loc[:, "price"].astype(str).str.replace(",", '')
     df_tidy = df[{'title', 'price', 'amount', 'image', 'link', 'desc'}]
     # df_tidy.loc[df_tidy['price']==0,'price']=df_tidy.loc[df_tidy['price']==0,'amount'].values
@@ -209,8 +198,7 @@ def momoShoptidyDfandgetPrice(itemfile):  # 整理momo
     df_tidy = df_tidy.rename(columns={'amount': 'discountprice'})
     # df_tidy.loc[:,'RawPrice']=df_tidy.loc[:,'RawPrice'].fillna(df_tidy.loc[:,'DiscountPrice'])
     # df_tidy=df_tidy.fillna(0)
-    df_tidy.loc[df_tidy['rawprice'] == 'nan', 'rawprice'] = df_tidy.loc[
-        df_tidy['rawprice'] == 'nan', 'discountprice'].values
+    df_tidy.loc[df_tidy['rawprice'] == '', 'rawprice'] = df_tidy.loc[df_tidy['rawprice'] == '', 'discountprice'].values
     df_tidy['discountpercent'] = round(
         (df_tidy['discountprice'].astype(float) / df_tidy['rawprice'].astype(float)) * 100)
     df_tidy['shop'] = 'momo'
@@ -247,13 +235,17 @@ def getLowerPriceinSameProduct(df_type, product_name):
 
 # keyboard name整理(排除組合價)
 def getnotCombineProduct(df):
+    df['iscombine'] = df['iscombine'].fillna(0)  # momo的isCombine是空值，給予其值
+    df['discountprice'] = df['discountprice'].astype(float)
+    df['rawprice'] = df['rawprice'].astype(float)
+    df['discountpercent'] = df['discountpercent'].astype(float)
     df_noCombine = df[df['iscombine'] == 0]
     return df_noCombine
 
 
 # 算四分位,刪除outlier的產品
 def deleteExcludeOutlierPrice(df):
-    discountprice = df['discountprice']
+    discountprice = df['discountprice'].astype(float)
     q1, q3 = measureIQR(discountprice)
     iqr = q3 - q1
     lowest_bound = q1 - 1.5 * iqr  # 最小值
@@ -266,10 +258,10 @@ def sortNormalProductbyPrice(df, q1, q3):  # 售價排序 並只return需要顯�
     df_normalprice = df[(df['discountprice'] <= q3) & (df['discountprice'] >= q1)]
     df_normalprice_increase = df_normalprice.sort_values(['discountprice'], ascending=True)
     df_normalprice_increase = df_normalprice_increase[
-        {'name', 'rawprice', 'discountprice', 'discountpercent', 'shop'}]
+        {'name', 'rawprice', 'discountprice', 'discountpercent', 'shop', 'image', 'link'}]
     df_normalprice_decrease = df_normalprice.sort_values(['discountprice'], ascending=False)
     df_normalprice_decrease = df_normalprice_increase[
-        {'name', 'rawprice', 'discountprice', 'discountpercent', 'shop'}]
+        {'name', 'rawprice', 'discountprice', 'discountpercent', 'shop', 'image', 'link'}]
     return df_normalprice_increase, df_normalprice_decrease
 
 
@@ -283,7 +275,7 @@ def sortNormalProductbyDiscountpercent(df, q1, q3):  # 折扣比例排序 #目�
 # 取價格最低的 並只return需要顯示之欄位
 def getLowestPrice(df):
     df_price_min = df[df['discountprice'] == df['discountprice'].min()]
-    df_price_min = df_price_min[{'name', 'rawprice', 'discountprice', 'discountpercent', 'shop'}]
+    df_price_min = df_price_min[{'name', 'rawprice', 'discountprice', 'discountpercent', 'shop', 'image', 'link'}]
     return df_price_min
 
 
@@ -291,20 +283,9 @@ def getLowestPrice(df):
 def getLowestDiscountpercent(df):
     df_discountpercent_min = df[df['discountpercent'] == df['discountpercent'].min()]
     df_discountpercent_min = df_discountpercent_min[
-        {'name', 'rawprice', 'discountprice', 'discountpercent', 'shop'}]
+        {'name', 'rawprice', 'discountprice', 'discountpercent', 'shop', 'image', 'link'}]
 
     return df_discountpercent_min
-
-
-# 圖轉base64並放入json字串
-def imageTransfertoJson(imageName):
-    with open(imageName, 'rb') as jpg_file:
-        byte_content = jpg_file.read()
-
-    base64_bytes = b64encode(byte_content)
-    base64_string = base64_bytes.decode('utf-8')
-
-    return base64_string
 
 
 # dataframe轉成json
