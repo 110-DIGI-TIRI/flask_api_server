@@ -106,4 +106,4 @@ def crawler_analyze():  # put application's code here
 if __name__ == '__main__':
     from waitress import serve
 
-    serve(application, host="0.0.0.0")
+    serve(application, host="0.0.0.0", url_scheme='https')
