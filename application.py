@@ -98,9 +98,15 @@ def crawler_analyze():  # put application's code here
                 keyword += kw + " "
 
         # 開始爬蟲
-        resp = api.crawler(keyword=keyword[:-1])
+        try:
+            resp = api.crawler(keyword=keyword[:-1])
         # resp.status_code = 201
-        return resp
+        except:
+            resp = jsonify({'message': 'error!'})
+            resp.status_code = 400
+            return resp
+        else:
+            return resp
 
 
 if __name__ == '__main__':
