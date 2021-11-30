@@ -106,6 +106,7 @@ def crawler_analyze():  # put application's code here
             resp.status_code = 400
             return resp
         else:
+            resp.status_code = 200
             return resp
 
 

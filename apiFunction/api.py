@@ -146,7 +146,8 @@ def crawler(keyword):
     df = df_pchome.append(df_momo)  # 兩個電商的相加
 
     df_excludeCombine = wcf.getnotCombineProduct(df)  # 排除組合價
-    keyboard_q1, keyboard_q3, df_excludeoutlier = wcf.deleteExcludeOutlierPrice(df_excludeCombine)  # 計算四分位並排除outlier
+    keyboard_q1, keyboard_q2, keyboard_q3, df_excludeoutlier, lowest_value, highest_value = wcf.deleteExcludeOutlierPrice(
+        df_excludeCombine)  # 計算四分位並排除outlier
 
     # print('鍵盤主要價格:${}$-${}'.format(int(keyboard_q1), int(keyboard_q3)))
 
@@ -165,8 +166,12 @@ def crawler(keyword):
     js_recommand_lowest = wcf.dataframeTransfertoJson(df_lowestbyprice)
     js_recommand_discount = wcf.dataframeTransfertoJson(df_lowestbydiscountpercent)
 
-    # 組成json格式
-    alljson = '{' + '"normalPrice25":' + str(
-        keyboard_q3) + ',"narmalPrice75":' + str(
-        keyboard_q1) + ',' + '"table_normal_decrease":' + js_price_decrease + ',' + '"table_normal_increase":' + js_price_increase + ',' + '"table_recommand_lowest":' + js_recommand_lowest + ',' + '"table_recommand_discount":' + js_recommand_discount + '}'
-    return alljson
+    # 組成json格式   #11/29新增
+    dict_result = {'Quartile': {'lowestPrice': lowest_value, 'normalPrice25': keyboard_q2, 'median': keyboard_q2,
+                                'normalPrice75': keyboard_q1, 'highestPrice': highest_value},
+                   'table_normal_decrease': df_keyboard_sortdecrease_byprice.to_dict('records'),
+                   'table_normal_increase': df_keyboard_sortincrease_byprice.to_dict('records'),
+                   'table_recommand_lowest': df_lowestbyprice.to_dict('records'),
+                   'table_recommand_discount': df_lowestbydiscountpercent.to_dict('records')
+                   }
+    return jsonify(dict_result)
