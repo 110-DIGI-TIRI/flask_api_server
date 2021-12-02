@@ -167,8 +167,8 @@ def crawler(keyword):
     js_recommand_discount = wcf.dataframeTransfertoJson(df_lowestbydiscountpercent)
 
     # 組成json格式   #11/29新增
-    dict_result = {'Quartile': {'lowestPrice': lowest_value, 'normalPrice25': keyboard_q2, 'median': keyboard_q2,
-                                'normalPrice75': keyboard_q1, 'highestPrice': highest_value},
+    dict_result = {'Quartile': {'lowestPrice': lowest_value, 'normalPrice25': keyboard_q1, 'median': keyboard_q2,
+                                'normalPrice75': keyboard_q3, 'highestPrice': highest_value},
                    'table_normal_decrease': df_keyboard_sortdecrease_byprice.to_dict('records'),
                    'table_normal_increase': df_keyboard_sortincrease_byprice.to_dict('records'),
                    'table_recommand_lowest': df_lowestbyprice.to_dict('records'),
