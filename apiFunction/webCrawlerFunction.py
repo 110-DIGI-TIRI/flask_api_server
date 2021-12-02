@@ -241,13 +241,16 @@ def getnotCombineProduct(df):
 
 # 算四分位,刪除outlier的產品
 def deleteExcludeOutlierPrice(df):
-    discountprice = df['discountprice'].astype(float)
+    discountprice = df['discountprice']
+    q2 = np.median(discountprice)
+    minvalue = np.min(discountprice)
+    maxvalue = np.max(discountprice)
     q1, q3 = measureIQR(discountprice)
     iqr = q3 - q1
-    lowest_bound = q1 - 1.5 * iqr  # 最小值
-    highest_bound = q3 + 1.5 * iqr  # 最大值
+    lowest_bound = q1 - 1.5 * iqr  # outlier最小範圍
+    highest_bound = q3 + 1.5 * iqr  # outlier最大範圍
     df_excludeOutlier = df[(df['discountprice'] <= highest_bound) & (df['discountprice'] >= lowest_bound)]
-    return q1, q3, df_excludeOutlier
+    return q1, q2, q3, df_excludeOutlier, minvalue, maxvalue
 
 
 def sortNormalProductbyPrice(df, q1, q3):  # 售價排序 並只return需要顯示之欄位
