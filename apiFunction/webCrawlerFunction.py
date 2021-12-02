@@ -293,15 +293,3 @@ def dataframeTransfertoJson(df):
     js = df.to_json(orient='records', force_ascii=False)
 
     return js
-
-
-# 算四分位,刪除outlier的產品
-def deleteExcludeOutlierPrice(df):
-    discountprice = df['discountprice']
-    q2 = discountprice.median()
-    q1, q3 = measureIQR(discountprice)
-    iqr = q3 - q1
-    lowest_bound = q1 - 1.5 * iqr  # 最小值
-    highest_bound = q3 + 1.5 * iqr  # 最大值
-    df_excludeOutlier = df[(df['discountprice'] <= highest_bound) & (df['discountprice'] >= lowest_bound)]
-    return q1, q2, q3, df_excludeOutlier, lowest_bound, highest_bound
